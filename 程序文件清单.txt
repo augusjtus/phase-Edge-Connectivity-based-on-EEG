@@ -1,0 +1,31 @@
+完成版 
+    通用
+        eFC、nFC：计算一个trial的eFC矩阵和nFC矩阵
+        Idiff
+        VFC_dyad：计算所有trial的eFC矩阵和nFC矩阵,将其转化为向量VFC
+            并汇总成矩阵，用以后续dyad识别性的分析
+    子任务2-1
+        main_Idiff_dyad
+        Idiff_bootstrap:用bootstrap对所有trial进行重抽样，
+            从而能够进行统计检验
+    子任务2-2
+        main_Idiff_dyad_tp4000
+        VFC_tp_seg：将EEG时间序列先拼接，然后分成不同时间长度的仿真trial，
+        从而研究时间序列长度对结果的影响
+    子任务2-3
+        main_Idiff_dyad_MST.ipynb：使用最小生成树MST算法对eFC矩阵进行降维后
+            其dyad识别性与nFC方法的比较
+        MST_Graph.py：创建graph对象，并计算最小生成树MST路径
+        VeFC_mst.py：计算所有trial的eFC矩阵对应的最小生成树向量VeFC并汇总成
+        矩阵，用以后续dyad识别性与nFC方法的比较 
+    任务3
+        main_Idiff_sit
+        Idiff_sit
+        Idiff_MST_sit
+
+
+
+备份
+    函数
+        VeFC_ex2fd.py：VeFC_dyad.py原始版本，包含了更多的时间强度序列计算
+        方式
