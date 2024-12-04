@@ -20,9 +20,11 @@ def Kmeans_score(dyad,VeFC,trn):
 
 
 ## topK accuracy
-# get_true_labels
 def get_true_labels(trn):
-    
+    """    
+    get_true_labels
+    """
+
     true_labels=[]
     for i in range(trn.shape[1]):
         true_label=[i]*trn[0][i]
@@ -205,4 +207,40 @@ def topk_sim_accuracy_meanpearsonr(VFC,trn,k):
     acrcy = np.count_nonzero(labels_comp==0)/len(labels_comp)
 
     return acrcy,pearsonr_topk_idx_list
+
+# topK accuracy with subject_mean pearsonr
+# show middle results
+def topk_sim_accuracy_meanpearsonr_middle_results(VFC,trn,k):
+    
+    # 计算真实标签
+    true_labels = get_true_labels(trn)
+    true_mean_labels = np.array(range(trn.shape[1]))
+
+    pearsonr_topk_idx_list = []
+    pearsonr_value_list = []
+    for trl_idx0 in range(VFC.shape[1]):
+        pearsonr_list = []
+        for trl_idx1 in range(VFC.shape[1]):
+            if trl_idx1 != trl_idx0:
+                pearsonr = np.corrcoef(VFC[:,trl_idx0],VFC[:,trl_idx1])[0,1]
+                pearsonr_list.append(pearsonr)
+        pearsonr_subj_mean = get_pearsonr_subj_mean(pearsonr_list,trn)
+        pearsonr_topk_idx,pearsonr_topk_value = get_topk_idx(pearsonr_subj_mean,k)
+        if trl_idx0==0:
+            pearsonr_topk_idx_list=pearsonr_topk_idx
+            pearsonr_value_list = pearsonr_subj_mean
+        else:
+            pearsonr_topk_idx_list=np.c_[pearsonr_topk_idx_list,pearsonr_topk_idx]
+            pearsonr_value_list = np.c_[pearsonr_value_list,pearsonr_subj_mean]
+
+    # 比较标签，数值为0表示相等
+    labels_comp = np.ones(true_labels.shape)
+    for i in range(k):
+        labels_comp_i = true_mean_labels[list(pearsonr_topk_idx_list[i,:])]-true_labels
+        labels_comp *= labels_comp_i
+
+# 计算正确的比例
+    acrcy = np.count_nonzero(labels_comp==0)/len(labels_comp)
+
+    return acrcy,pearsonr_topk_idx_list,pearsonr_value_list
 
