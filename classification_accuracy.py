@@ -74,6 +74,7 @@ def Agg_cluster_score(VnFC_subj,trn_subj):
     plt.ylabel("Feature 2")
     plt.show()
 
+
 ## topK accuracy
 def get_true_labels(trn):
     """    
@@ -234,41 +235,45 @@ def get_pearsonr_subj_mean(pearsonr_list,trn_subj,trl_idx0):
 
     return pearsonr_subj_mean
 
-# topK accuracy with subject_mean pearsonr
-def topk_sim_accuracy_meanpearsonr(VFC,trn,k):
-    
-    # 计算真实标签
-    true_labels = get_true_labels(trn)
-    true_mean_labels = np.array(range(trn.shape[1]))
+def get_pearsonr_allothers_mean(pearsonr_list,trn_subj,trl_idx0):
+    trn_pre = 0 
+    # 个体内的平均相关系数 pearsonr_subji_mean
+    for trn in trn_subj[0]:
+    # 确定前后索引位置
+        pre_idx,post_idx=trn_pre,trn_pre+trn
+        # 如果trl_idx0在pre_idx:post_idx之间，即排序为trl_idx0的vfc对应的subject
+        if pre_idx<= trl_idx0 & trl_idx0<=post_idx:
+            pearsonr_subji=pearsonr_list[pre_idx:post_idx]
+            pearsonr_subji_mean = (np.sum(pearsonr_subji)-1)/(len(pearsonr_subji)-1)
+        trn_pre+=trn #记录前一个场景的trail number
+    # 个体间的平均相关系数 pearsonr_allothers_mean
+    pearsonr_allothers_mean = (np.sum(pearsonr_list)-np.sum(pearsonr_subji))/(len(pearsonr_list)-len(pearsonr_subji))
 
-    pearsonr_topk_idx_list = []
+    # 判断个体内和个体间平均相关系数的大小
+    compare_flag = int(pearsonr_subji_mean>pearsonr_allothers_mean)
+    return compare_flag,pearsonr_subji_mean,pearsonr_allothers_mean
+
+# binary classification accuracy
+def binary_classification_accuracy(VFC,trn):
+    
+    compare_flag_list = []
     for trl_idx0 in range(VFC.shape[1]):
         pearsonr_list = []
         for trl_idx1 in range(VFC.shape[1]):
-            if trl_idx1 != trl_idx0:
-                pearsonr = np.corrcoef(VFC[:,trl_idx0],VFC[:,trl_idx1])[0,1]
-                pearsonr_list.append(pearsonr)
-        pearsonr_subj_mean = get_pearsonr_subj_mean(pearsonr_list,trn)
-        pearsonr_topk_idx,pearsonr_topk_value = get_topk_idx(pearsonr_subj_mean,k)
-        # print(pearsonr_topk_value)
+            pearsonr = np.corrcoef(VFC[:,trl_idx0],VFC[:,trl_idx1])[0,1]
+            pearsonr_list.append(pearsonr)
+        compare_flag,pearsonr_subji_mean,pearsonr_allothers_mean = get_pearsonr_allothers_mean(pearsonr_list,trn,trl_idx0)
+        compare_flag_list.append(compare_flag)
         if trl_idx0==0:
-            pearsonr_topk_idx_list=pearsonr_topk_idx
-        else:
-            pearsonr_topk_idx_list=np.c_[pearsonr_topk_idx_list,pearsonr_topk_idx]
+            print(pearsonr_subji_mean,pearsonr_allothers_mean)
+    
+    # 计算正确的比例
+    acrcy = np.sum(compare_flag_list)/len(compare_flag_list)
 
-    # 比较标签，数值为0表示相等
-    labels_comp = np.ones(true_labels.shape)
-    for i in range(k):
-        labels_comp_i = true_mean_labels[list(pearsonr_topk_idx_list[i,:])]-true_labels
-        labels_comp *= labels_comp_i
+    return acrcy
 
-# 计算正确的比例
-    acrcy = np.count_nonzero(labels_comp==0)/len(labels_comp)
-
-    return acrcy,pearsonr_topk_idx_list
-
-# binary classification accuracy
-def topk_sim_accuracy_meanpearsonr1(VFC,trn,k):
+# topK accuracy with subject_mean pearsonr
+def topk_sim_accuracy_meanpearsonr(VFC,trn,k):
     
     # 计算真实标签
     true_labels = get_true_labels(trn)
